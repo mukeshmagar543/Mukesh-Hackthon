@@ -26,7 +26,12 @@ export async function POST(req) {
     let companyName = input.trim();
 
     if (!isUrl(website)) {
-      const found = await findOfficialWebsite(website, serperKey);
+      let found;
+      try {
+        found = await findOfficialWebsite(website, serperKey);
+      } catch (e) {
+        throw new Error(`[SERPER-findOfficialWebsite] ${e.response?.status || ""} ${e.message}`);
+      }
       if (!found) {
         return NextResponse.json({ error: "Could not find official website" }, { status: 404 });
       }
@@ -38,18 +43,26 @@ export async function POST(req) {
     const crawledPages = await crawlWebsite(website, 6);
     const crawledContent = crawledPages.map((p) => `URL: ${p.url}\n${p.text}`).join("\n\n");
 
-    const analysis = await analyzeCompany({
-      companyName,
-      crawledContent,
-      model,
-      apiKey: openrouterKey,
-    });
+    let analysis;
+    try {
+      analysis = await analyzeCompany({ companyName, crawledContent, model, apiKey: openrouterKey });
+    } catch (e) {
+      throw new Error(`[OPENROUTER-analyzeCompany] ${e.response?.status || ""} ${e.message} | ${JSON.stringify(e.response?.data || {})}`);
+    }
 
-    const competitors = await findCompetitors(
-      analysis.companyName || companyName,
-      analysis.industry,
-      serperKey
-    );
+    // ---- REPLACED BLOCK STARTS HERE ----
+    let competitors = analysis.competitors && analysis.competitors.length > 0
+      ? analysis.competitors
+      : [];
+
+    if (competitors.length === 0) {
+      try {
+        competitors = await findCompetitors(analysis.companyName || companyName, analysis.industry, serperKey);
+      } catch (e) {
+        competitors = [];
+      }
+    }
+    // ---- REPLACED BLOCK ENDS HERE ----
 
     const reportData = {
       companyName: analysis.companyName || companyName,

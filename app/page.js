@@ -2,9 +2,9 @@
 import { useState } from "react";
 
 const MODELS = [
-  { label: "Llama 3.3 70B (Free)", value: "meta-llama/llama-3.3-70b-instruct:free" },
   { label: "DeepSeek R1 (Free)", value: "deepseek/deepseek-r1:free" },
   { label: "GPT-OSS 20B (Free)", value: "openai/gpt-oss-20b:free" },
+  { label: "Llama 3.3 70B (Free)", value: "meta-llama/llama-3.3-70b-instruct:free" },
 ];
 
 const EXAMPLES = ["stripe.com", "Tesla", "Microsoft", "OpenAI"];
